@@ -3,7 +3,7 @@
 A full-stack team task management web application built with Flask, SQLAlchemy, and SQLite.
 
 ## Live Demo
-🔗 [https://your-railway-url.up.railway.app](https://your-railway-url.up.railway.app)
+🔗 https://team-task-manager-2-g3tk.onrender.com
 
 ## Features
 - User authentication (signup / login / logout)
@@ -60,7 +60,7 @@ team-task-manager/
 ├── Procfile             # Railway start command
 └── requirements.txt     # Dependencies
 
-## Deployment (Railway)
+## Deployment (Render)
 1. Push code to GitHub
 2. Connect repo on railway.app
 3. Add environment variables (SECRET_KEY, JWT_SECRET_KEY)
