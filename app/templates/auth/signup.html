@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — TaskFlow{% endblock %}
+
+{% block content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e1e2e 0%,#313244 100%);">
+  <div class="form-card w-100" style="max-width:420px">
+
+    <div class="text-center mb-4">
+      <div style="font-size:2rem;font-weight:800;color:#7c3aed;letter-spacing:-1px;">Task<span style="color:#1e1e2e">Flow</span></div>
+      <p class="text-muted mt-1" style="font-size:0.9rem">Create your free account</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.signup') }}">
+      <div class="mb-3">
+        <label class="form-label">Full name</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" name="name" class="form-control" placeholder="Jane Doe" required autofocus/>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email address</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+          <input type="email" name="email" class="form-control" placeholder="you@example.com" required/>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Password <span class="text-muted fw-normal">(min 6 chars)</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" name="password" class="form-control" placeholder="••••••••" required/>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100 py-2">
+        <i class="bi bi-person-plus me-1"></i> Create Account
+      </button>
+    </form>
+
+    <hr class="my-4"/>
+    <p class="text-center text-muted mb-0" style="font-size:0.88rem">
+      Already have an account?
+      <a href="{{ url_for('auth.login') }}" class="text-decoration-none fw-500" style="color:#7c3aed">Sign in</a>
+    </p>
+
+  </div>
+</div>
+{% endblock %}

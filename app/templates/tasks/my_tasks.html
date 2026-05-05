@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}My Tasks — TaskFlow{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <h4>My Tasks</h4>
+</div>
+
+<div class="table-card">
+  <table class="table">
+    <thead>
+      <tr><th>Task</th><th>Project</th><th>Priority</th><th>Status</th><th>Due Date</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% if tasks %}
+        {% for task in tasks %}
+        <tr>
+          <td class="fw-500">{{ task.title }}</td>
+          <td>
+            <a href="{{ url_for('projects.project_detail', project_id=task.project_id) }}"
+               class="text-decoration-none text-muted" style="font-size:0.85rem">
+              {{ task.project.name }}
+            </a>
+          </td>
+          <td><span class="badge badge-{{ task.priority }}">{{ task.priority }}</span></td>
+          <td>
+            <span class="badge badge-{{ task.status }}">
+              {{ task.status.replace('_',' ').title() }}
+            </span>
+          </td>
+          <td style="font-size:0.85rem;color:{{ '#dc2626' if task.is_overdue else '#6c7086' }}">
+            {% if task.due_date %}
+              {{ task.due_date.strftime('%b %d, %Y') }}
+              {% if task.is_overdue %}
+                <span class="badge bg-danger ms-1" style="font-size:0.7rem">Overdue</span>
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}"
+               class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-pencil"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-5">
+            <i class="bi bi-check2-square" style="font-size:2rem;display:block;margin-bottom:8px"></i>
+            No tasks assigned to you yet.
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

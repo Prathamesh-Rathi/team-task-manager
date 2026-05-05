@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — TaskFlow{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <h4>Good day, {{ user.name }} 👋</h4>
+    <p class="text-muted mb-0" style="font-size:0.88rem">Here's what's happening across your projects</p>
+  </div>
+  <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> New Project
+  </a>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  {% set stats = [
+    ('Total Tasks',    total_tasks,      'bi-list-task',       '#7c3aed', '#ede9fe'),
+    ('To Do',          todo_count,       'bi-circle',          '#2563eb', '#dbeafe'),
+    ('In Progress',    inprogress_count, 'bi-arrow-clockwise', '#d97706', '#fef3c7'),
+    ('Done',           done_count,       'bi-check-circle',    '#16a34a', '#dcfce7'),
+    ('Overdue',        overdue_count,    'bi-exclamation-circle','#dc2626','#fee2e2'),
+    ('Projects',       projects|length,  'bi-folder2-open',    '#0891b2', '#e0f2fe'),
+  ] %}
+  {% for label, val, icon, color, bg in stats %}
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-number" style="color:{{ color }}">{{ val }}</div>
+          <div class="stat-label">{{ label }}</div>
+        </div>
+        <div class="stat-icon" style="background:{{ bg }};color:{{ color }}">
+          <i class="bi {{ icon }}"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+  <!-- My tasks -->
+  <div class="col-lg-7">
+    <div class="table-card">
+      <div class="d-flex justify-content-between align-items-center p-3 pb-0">
+        <h6 class="fw-700 mb-0">My Assigned Tasks</h6>
+        <a href="{{ url_for('tasks.my_tasks') }}" class="btn btn-sm btn-outline-primary">View all</a>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Task</th><th>Project</th><th>Priority</th><th>Status</th><th>Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if my_tasks %}
+            {% for task in my_tasks %}
+            <tr>
+              <td>
+                <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}"
+                   class="text-decoration-none fw-500 text-dark">{{ task.title }}</a>
+              </td>
+              <td><span class="text-muted" style="font-size:0.82rem">{{ task.project.name }}</span></td>
+              <td>
+                <span class="badge badge-{{ task.priority }}">{{ task.priority }}</span>
+              </td>
+              <td>
+                <span class="badge badge-{{ task.status }}">
+                  {{ task.status.replace('_',' ').title() }}
+                </span>
+              </td>
+              <td style="font-size:0.82rem;color:{{ '#dc2626' if task.is_overdue else '#6c7086' }}">
+                {% if task.due_date %}
+                  {{ task.due_date.strftime('%b %d') }}
+                  {% if task.is_overdue %}<i class="bi bi-exclamation-circle ms-1"></i>{% endif %}
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No tasks assigned to you yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Projects -->
+  <div class="col-lg-5">
+    <div class="table-card">
+      <div class="p-3 pb-0 d-flex justify-content-between align-items-center">
+        <h6 class="fw-700 mb-0">My Projects</h6>
+        <a href="{{ url_for('projects.list_projects') }}" class="btn btn-sm btn-outline-primary">View all</a>
+      </div>
+      <div class="p-3">
+        {% if projects %}
+          {% for p in projects %}
+          <a href="{{ url_for('projects.project_detail', project_id=p.id) }}"
+             class="d-flex align-items-center gap-3 p-2 rounded text-decoration-none mb-2"
+             style="transition:.15s" onmouseover="this.style.background='#f8f8fb'" onmouseout="this.style.background=''">
+            <div style="width:38px;height:38px;border-radius:10px;background:#ede9fe;
+                        display:flex;align-items:center;justify-content:center;
+                        font-weight:700;color:#7c3aed;font-size:1rem;flex-shrink:0">
+              {{ p.name[0].upper() }}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="fw-500 text-dark" style="font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                {{ p.name }}
+              </div>
+              <div style="font-size:0.78rem;color:#6c7086">
+                {{ p.tasks|length }} tasks · {{ p.members|length }} members
+              </div>
+            </div>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </a>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted text-center py-3" style="font-size:0.88rem">
+            No projects yet.
+            <a href="{{ url_for('projects.create_project') }}">Create one</a>
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

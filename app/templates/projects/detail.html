@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — TaskFlow{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <h4>{{ project.name }}</h4>
+    <span class="badge {{ 'bg-warning text-dark' if role == 'admin' else 'bg-secondary' }}">
+      Your role: {{ role }}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    {% if role == 'admin' %}
+      <a href="{{ url_for('tasks.create_task', project_id=project.id) }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Add Task
+      </a>
+      <form method="POST"
+            action="{{ url_for('projects.delete_project', project_id=project.id) }}"
+            onsubmit="return confirm('Delete this project and all its tasks?')">
+        <button class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-trash"></i>
+        </button>
+      </form>
+    {% endif %}
+    <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+  </div>
+</div>
+
+{% if project.description %}
+  <p class="text-muted mb-4">{{ project.description }}</p>
+{% endif %}
+
+<!-- Task Board -->
+<div class="row g-3 mb-4">
+  {% set columns = [
+    ('To Do',       'todo',        todo_tasks,       'bi-circle',          '#6c7086','#f8f8fb'),
+    ('In Progress', 'in_progress', inprogress_tasks, 'bi-arrow-clockwise', '#d97706','#fef3c7'),
+    ('Done',        'done',        done_tasks,        'bi-check-circle',   '#16a34a','#dcfce7'),
+  ] %}
+  {% for col_label, col_status, col_tasks, col_icon, col_color, col_bg in columns %}
+  <div class="col-md-4">
+    <div style="background:#fff;border-radius:14px;padding:16px;
+                box-shadow:0 2px 8px rgba(0,0,0,0.06);min-height:200px">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi {{ col_icon }}" style="color:{{ col_color }}"></i>
+        <span class="fw-600" style="font-size:0.9rem">{{ col_label }}</span>
+        <span class="badge ms-auto" style="background:{{ col_bg }};color:{{ col_color }}">
+          {{ col_tasks|length }}
+        </span>
+      </div>
+
+      {% for task in col_tasks %}
+      <div class="mb-2 p-3" style="background:#f8f8fb;border-radius:10px;
+           border-left:3px solid {{ '#dc2626' if task.priority=='high' else '#d97706' if task.priority=='medium' else '#16a34a' }}">
+        <div class="d-flex justify-content-between align-items-start">
+          <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}"
+             class="text-decoration-none text-dark fw-500" style="font-size:0.88rem">
+            {{ task.title }}
+          </a>
+          {% if role == 'admin' %}
+          <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}"
+                onsubmit="return confirm('Delete this task?')" class="ms-2">
+            <button class="btn btn-sm p-0 text-muted" style="line-height:1">
+              <i class="bi bi-x"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+
+        {% if task.assignee %}
+          <div class="text-muted mt-1" style="font-size:0.75rem">
+            <i class="bi bi-person me-1"></i>{{ task.assignee.name }}
+          </div>
+        {% endif %}
+
+        <div class="d-flex align-items-center gap-2 mt-2">
+          <span class="badge badge-{{ task.priority }}" style="font-size:0.7rem">{{ task.priority }}</span>
+          {% if task.due_date %}
+            <span style="font-size:0.72rem;color:{{ '#dc2626' if task.is_overdue else '#6c7086' }}">
+              <i class="bi bi-calendar3 me-1"></i>{{ task.due_date.strftime('%b %d') }}
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Quick status change -->
+        <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}" class="mt-2">
+          <select name="status" class="form-select form-select-sm"
+                  onchange="this.form.submit()" style="font-size:0.75rem;padding:2px 6px">
+            <option value="todo"        {{ 'selected' if task.status=='todo' }}>To Do</option>
+            <option value="in_progress" {{ 'selected' if task.status=='in_progress' }}>In Progress</option>
+            <option value="done"        {{ 'selected' if task.status=='done' }}>Done</option>
+          </select>
+        </form>
+      </div>
+      {% else %}
+        <p class="text-muted text-center" style="font-size:0.82rem;margin-top:40px">No tasks</p>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Members Section -->
+<div class="table-card mb-4">
+  <div class="p-3 pb-0 d-flex justify-content-between align-items-center">
+    <h6 class="fw-700 mb-0"><i class="bi bi-people me-2"></i>Members</h6>
+  </div>
+  <table class="table">
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th>{% if role=='admin' %}<th></th>{% endif %}</tr>
+    </thead>
+    <tbody>
+      {% for membership, member in members %}
+      <tr>
+        <td class="fw-500">{{ member.name }}</td>
+        <td class="text-muted" style="font-size:0.85rem">{{ member.email }}</td>
+        <td>
+          <span class="badge {{ 'bg-warning text-dark' if membership.role=='admin' else 'bg-secondary' }}">
+            {{ membership.role }}
+          </span>
+        </td>
+        <td class="text-muted" style="font-size:0.82rem">{{ membership.joined_at.strftime('%b %d, %Y') }}</td>
+        {% if role == 'admin' %}
+        <td>
+          {% if member.id != user.id %}
+          <form method="POST"
+                action="{{ url_for('projects.remove_member', project_id=project.id, user_id=member.id) }}"
+                onsubmit="return confirm('Remove {{ member.name }}?')">
+            <button class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-person-x"></i>
+            </button>
+          </form>
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Add Member (Admin only) -->
+{% if role == 'admin' %}
+<div class="form-card" style="max-width:560px">
+  <h6 class="fw-700 mb-3"><i class="bi bi-person-plus me-2"></i>Add Member</h6>
+  <form method="POST" action="{{ url_for('projects.add_member', project_id=project.id) }}">
+    <div class="row g-2">
+      <div class="col-sm-6">
+        <select name="user_id" class="form-select" required>
+          <option value="">Select user…</option>
+          {% set member_ids = members | map(attribute='1') | map(attribute='id') | list %}
+          {% for u in all_users %}
+            {% if u.id not in member_ids %}
+              <option value="{{ u.id }}">{{ u.name }} ({{ u.email }})</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-3">
+        <select name="role" class="form-select">
+          <option value="member">Member</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="col-sm-3">
+        <button class="btn btn-primary w-100">Add</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

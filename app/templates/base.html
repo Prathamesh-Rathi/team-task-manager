@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Task Manager{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <style>
+    body { background: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px; min-height: 100vh;
+      background: #1e1e2e; color: #cdd6f4;
+      position: fixed; top: 0; left: 0;
+      display: flex; flex-direction: column;
+      padding: 0; z-index: 100;
+    }
+    .sidebar-brand {
+      padding: 20px 24px 16px;
+      font-size: 1.2rem; font-weight: 700;
+      color: #cba6f7; border-bottom: 1px solid #313244;
+      letter-spacing: 0.5px;
+    }
+    .sidebar-brand span { color: #89b4fa; }
+    .sidebar-nav { padding: 12px 0; flex: 1; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 24px; color: #a6adc8;
+      text-decoration: none; font-size: 0.92rem;
+      transition: all 0.18s;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active {
+      background: #313244; color: #cdd6f4;
+      border-left: 3px solid #cba6f7;
+      padding-left: 21px;
+    }
+    .sidebar-nav a i { font-size: 1rem; width: 18px; }
+    .sidebar-footer {
+      padding: 16px 24px; border-top: 1px solid #313244;
+      font-size: 0.82rem; color: #6c7086;
+    }
+    .sidebar-footer strong { color: #cdd6f4; display: block; margin-bottom: 6px; }
+
+    /* Main content */
+    .main-content { margin-left: 240px; padding: 32px; min-height: 100vh; }
+
+    /* Topbar */
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 28px;
+    }
+    .topbar h4 { margin: 0; font-weight: 700; color: #1e1e2e; }
+
+    /* Cards */
+    .stat-card {
+      background: #fff; border-radius: 14px;
+      padding: 22px 24px; border: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .stat-card .stat-number {
+      font-size: 2rem; font-weight: 700; line-height: 1;
+    }
+    .stat-card .stat-label { font-size: 0.82rem; color: #6c7086; margin-top: 4px; }
+    .stat-card .stat-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    /* Task status badges */
+    .badge-todo        { background: #e0e0e0; color: #444; }
+    .badge-in_progress { background: #dbeafe; color: #1d4ed8; }
+    .badge-done        { background: #dcfce7; color: #15803d; }
+    .badge-high        { background: #fee2e2; color: #dc2626; }
+    .badge-medium      { background: #fef3c7; color: #d97706; }
+    .badge-low         { background: #f0fdf4; color: #16a34a; }
+
+    /* Table */
+    .table-card {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden;
+    }
+    .table-card .table { margin: 0; }
+    .table-card .table thead th {
+      background: #f8f8fb; font-size: 0.78rem;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: #6c7086; border: none; padding: 14px 16px;
+    }
+    .table-card .table tbody td { padding: 13px 16px; vertical-align: middle; border-color: #f1f0f5; }
+
+    /* Buttons */
+    .btn-primary   { background: #7c3aed; border-color: #7c3aed; }
+    .btn-primary:hover { background: #6d28d9; border-color: #6d28d9; }
+    .btn-outline-primary { color: #7c3aed; border-color: #7c3aed; }
+    .btn-outline-primary:hover { background: #7c3aed; color: #fff; }
+
+    /* Forms */
+    .form-card {
+      background: #fff; border-radius: 16px; padding: 36px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07); max-width: 480px; margin: 0 auto;
+    }
+    .form-control:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+    .form-label { font-weight: 500; font-size: 0.88rem; color: #374151; }
+  </style>
+</head>
+<body>
+
+{% if session.user_id %}
+<!-- Sidebar (only shown when logged in) -->
+<div class="sidebar">
+  <div class="sidebar-brand">Task<span>Flow</span></div>
+  <nav class="sidebar-nav">
+    <a href="{{ url_for('dashboard.index') }}"
+       class="{{ 'active' if request.endpoint == 'dashboard.index' }}">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{{ url_for('projects.list_projects') }}"
+       class="{{ 'active' if 'project' in request.endpoint }}">
+      <i class="bi bi-folder2-open"></i> Projects
+    </a>
+    <a href="{{ url_for('tasks.my_tasks') }}"
+       class="{{ 'active' if 'task' in request.endpoint }}">
+      <i class="bi bi-check2-square"></i> My Tasks
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <strong>{{ session.user_name }}</strong>
+    {{ session.user_email }}
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger mt-2 w-100">
+      <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+  </div>
+</div>
+<div class="main-content">
+{% endif %}
+
+  <!-- Flash messages -->
+  <div {% if not session.user_id %}style="max-width:480px;margin:40px auto;padding:0 16px"{% endif %}>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  {% block content %}{% endblock %}
+
+{% if session.user_id %}
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
